@@ -3,7 +3,6 @@ package org.broadinstitute.hellbender.tools.spark.sv.utils;
 import htsjdk.samtools.Cigar;
 import htsjdk.samtools.CigarElement;
 import htsjdk.samtools.TextCigarCodec;
-import org.broadinstitute.hellbender.tools.spark.sv.utils.SvCigarUtils;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -120,7 +119,7 @@ public class SvCigarUtilsUnitTest {
     @Test(dataProvider = "refWalkDistanceTestDataException", groups = "sv", expectedExceptions = IllegalArgumentException.class)
     public void testRefWalkDistanceException(final Cigar cigar, final int startInclusive, final int distance,
                                              final int expectedRefDist) {
-        Assert.assertEquals(SvCigarUtils.walkAlongRead(cigar, startInclusive, distance), expectedRefDist);
+        Assert.assertEquals(SvCigarUtils.computeAssociatedDistOnRef(cigar, startInclusive, distance), expectedRefDist);
     }
 
     @DataProvider(name = "refWalkDistanceTestData")
@@ -143,6 +142,6 @@ public class SvCigarUtilsUnitTest {
 
     @Test(dataProvider = "refWalkDistanceTestData", groups = "sv")
     public void testRefWalkDistance(final Cigar cigar, final int startInclusive, final int distance, final int expectedRefDist) {
-        Assert.assertEquals(SvCigarUtils.walkAlongRead(cigar, startInclusive, distance), expectedRefDist);
+        Assert.assertEquals(SvCigarUtils.computeAssociatedDistOnRef(cigar, startInclusive, distance), expectedRefDist);
     }
 }

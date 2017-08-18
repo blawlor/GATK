@@ -12,8 +12,8 @@ import htsjdk.samtools.TextCigarCodec;
 import htsjdk.samtools.util.SequenceUtil;
 import org.broadinstitute.hellbender.exceptions.GATKException;
 import org.broadinstitute.hellbender.tools.spark.sv.utils.SVUtils;
+import org.broadinstitute.hellbender.tools.spark.sv.utils.SvCigarUtils;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
-import org.broadinstitute.hellbender.utils.haplotype.Haplotype;
 import org.broadinstitute.hellbender.utils.read.CigarUtils;
 import scala.Tuple2;
 
@@ -219,10 +219,11 @@ public final class BreakpointComplications {
         final int jl = secondAlignmentInterval.forwardStrand ? secondAlignmentInterval.referenceSpan.getStart()
                                                              : secondAlignmentInterval.referenceSpan.getEnd();
 
-        final int alpha = firstAlignmentInterval.referenceSpan.getStart(),
-                  omega = secondAlignmentInterval.referenceSpan.getStart();
+
 
         if (firstAlignmentInterval.forwardStrand) {
+            final int alpha = firstAlignmentInterval.referenceSpan.getStart(),
+                      omega = secondAlignmentInterval.referenceSpan.getStart();
             dupSeqRepeatUnitRefSpan = new SimpleInterval(firstAlignmentInterval.referenceSpan.getContig(),
                                                          Math.max(alpha, omega), Math.min(js, jl));
             if ( (alpha <= omega && js < jl) || (alpha > omega && jl < js) ) {
@@ -231,6 +232,8 @@ public final class BreakpointComplications {
             }
             dupSeqStrandOnCtg = DEFAULT_INV_DUP_CTG_STRANDs_FR;
         } else {
+            final int alpha = firstAlignmentInterval.referenceSpan.getEnd(),
+                      omega = secondAlignmentInterval.referenceSpan.getEnd();
             dupSeqRepeatUnitRefSpan = new SimpleInterval(firstAlignmentInterval.referenceSpan.getContig(),
                                                          Math.max(js, jl), Math.min(alpha, omega));
             if ( (alpha >= omega && jl < js) || (alpha < omega && js < jl) ) {
@@ -245,8 +248,51 @@ public final class BreakpointComplications {
     }
 
     public byte[] extractAltHaplotypeForInvDup(final ChimericAlignment chimericAlignment, final byte[] contigSeq) {
-        
-        return null;
+
+        final AlignmentInterval firstAlignmentInterval  = chimericAlignment.regionWithLowerCoordOnContig;
+        final AlignmentInterval secondAlignmentInterval = chimericAlignment.regionWithHigherCoordOnContig;
+
+
+
+        final int start, end; // intended to be 0-based, semi-open [start, end)
+        final boolean needRC;
+        if (firstAlignmentInterval.forwardStrand) {
+            final int alpha = firstAlignmentInterval.referenceSpan.getStart(),
+                      omega = secondAlignmentInterval.referenceSpan.getStart();
+            if (alpha <= omega) {
+                final int walkOnRead = SvCigarUtils.computeAsscoatedDistOnRead(firstAlignmentInterval.cigarAlong5to3DirectionOfContig,
+                        firstAlignmentInterval.startInAssembledContig, omega - alpha, false);
+                start  = firstAlignmentInterval.startInAssembledContig + walkOnRead - 1;
+                end    = secondAlignmentInterval.endInAssembledContig;
+                needRC = false;
+            } else {
+                final int walkOnRead = SvCigarUtils.computeAsscoatedDistOnRead(secondAlignmentInterval.cigarAlong5to3DirectionOfContig,
+                        secondAlignmentInterval.endInAssembledContig, alpha - omega,  true);
+                start  = firstAlignmentInterval.startInAssembledContig - 1;
+                end    = secondAlignmentInterval.endInAssembledContig - walkOnRead;
+                needRC = true;
+            }
+        } else {
+            final int alpha = firstAlignmentInterval.referenceSpan.getEnd(),
+                      omega = secondAlignmentInterval.referenceSpan.getEnd();
+            if (alpha >= omega) {
+                final int walkOnRead = SvCigarUtils.computeAsscoatedDistOnRead(firstAlignmentInterval.cigarAlong5to3DirectionOfContig,
+                        firstAlignmentInterval.startInAssembledContig, alpha - omega, false);
+                start  = firstAlignmentInterval.startInAssembledContig + walkOnRead - 1;
+                end    = secondAlignmentInterval.endInAssembledContig;
+                needRC = true;
+            } else {
+                final int walkOnRead = SvCigarUtils.computeAsscoatedDistOnRead(secondAlignmentInterval.cigarAlong5to3DirectionOfContig,
+                        secondAlignmentInterval.endInAssembledContig, omega - alpha, true);
+                start  = firstAlignmentInterval.startInAssembledContig - 1;
+                end    = secondAlignmentInterval.endInAssembledContig - walkOnRead;
+                needRC = false;
+            }
+        }
+
+        final byte[] seq = Arrays.copyOfRange(contigSeq, start, end);
+        if (needRC) SequenceUtil.reverseComplement(seq, 0, seq.length);
+        return seq;
     }
 
     /**

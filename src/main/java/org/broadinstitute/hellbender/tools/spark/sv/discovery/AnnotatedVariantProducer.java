@@ -93,6 +93,10 @@ public class AnnotatedVariantProducer implements Serializable {
 
         if (end > 0)
             vcBuilder.attribute(VCFConstants.END_KEY, applicableEnd);
+
+        if (altHaplotypeSeq!=null)
+            vcBuilder.attribute(GATKSVVCFConstants.ALT_HAPLOTYPE_SEQ, new String(altHaplotypeSeq));
+
         return vcBuilder.make();
     }
 

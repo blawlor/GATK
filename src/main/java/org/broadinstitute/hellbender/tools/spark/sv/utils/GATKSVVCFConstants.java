@@ -31,6 +31,8 @@ public class GATKSVVCFConstants {
     public static final String INSERTED_SEQUENCE_MAPPINGS = "INSERTED_SEQUENCE_MAPPINGS";
     public static final String HOMOLOGY = "HOMOLOGY";
     public static final String HOMOLOGY_LENGTH = "HOMOLOGY_LENGTH";
+    public static final String ALT_HAPLOTYPE_SEQ = "ALT_HT_SEQ";
+
     // type specific: tandem duplication
     public static final String DUP_REPEAT_UNIT_REF_SPAN = "DUP_REPEAT_UNIT_REF_SPAN";
     public static final String DUP_SEQ_CIGARS = "DUP_SEQ_CIGARS";

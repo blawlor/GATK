@@ -54,9 +54,8 @@ final class ForSimpleStrandSwitch implements VariantDetectorFromLongReadAlignmen
 
         final JavaRDD<VariantContext> invDups =
                 dealWithSuspectedInvDup(split._1, broadcastReference, toolLogger);
-        if (invDups != null)
-            SVVCFWriter.writeVCF(options, vcfOutputFileName.replace(".vcf", "_invDup.vcf"),
-                    fastaReference, invDups, toolLogger);
+        SVVCFWriter.writeVCF(options, vcfOutputFileName.replace(".vcf", "_invDup.vcf"),
+                fastaReference, invDups, toolLogger);
     }
 
     public static final class IsLikelyInvertedDuplication implements SerializablePredicate<AlignedContig> {

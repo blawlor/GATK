@@ -246,24 +246,25 @@ public final class SvCigarUtils {
     /**
      * Computes the corresponding distance needs to be walked on the reference, given the Cigar and distance walked on the read.
      * @param cigarAlong5To3DirOfRead   cigar along the 5-3 direction of read (when read is mapped to reverse strand, bwa mem output cigar should be inverted)
-     * @param startInclusive            start position on the read (note it should not count the hard clipped bases, as usual)
-     * @param distance                  distance to walk on the read
+     * @param startInclusiveOnRead      start position (1-based) on the read (note it should not count the hard clipped bases, as usual)
+     * @param distanceOnRead            distance to walk on the read
      * @return                          corresponding walk distance on reference
      * @throws IllegalArgumentException if input cigar contains padding operation or 'N', or
      *                                  either of startInclusive or distance is non-positive, or
      *                                  startInclusive + distance -1 is longer than the read as suggested by the cigar
      */
-    public static int walkAlongRead(final Cigar cigarAlong5To3DirOfRead, final int startInclusive, final int distance) {
+    public static int computeAssociatedDistOnRef(final Cigar cigarAlong5To3DirOfRead, final int startInclusiveOnRead,
+                                                 final int distanceOnRead) {
 
-        final int endInclusive = startInclusive + distance - 1;
-        Utils.validateArg(startInclusive>0 && distance > 0,
-                "start position (" + startInclusive + ") or distance (" + distance + ") is non-positive.");
+        final int endInclusive = startInclusiveOnRead + distanceOnRead - 1;
+        Utils.validateArg(startInclusiveOnRead>0 && distanceOnRead > 0,
+                "start position (" + startInclusiveOnRead + ") or distance (" + distanceOnRead + ") is non-positive.");
         final List<CigarElement> cigarElements = cigarAlong5To3DirOfRead.getCigarElements();
         Utils.validateArg(cigarElements.stream().noneMatch(ce -> ce.getOperator().isPadding() || ce.getOperator().equals(CigarOperator.N)),
                 "cigar contains padding, which is currently unsupported; cigar: " + TextCigarCodec.encode(cigarAlong5To3DirOfRead));
         Utils.validateArg(cigarElements.stream()
                         .mapToInt(ce -> ce.getOperator().consumesReadBases() ? ce.getLength() : 0).sum() >= endInclusive,
-                "start location (" + startInclusive + ") and walking distance (" + distance +
+                "start location (" + startInclusiveOnRead + ") and walking distance (" + distanceOnRead +
                         ") would walk out of the read, indicated by cigar " + TextCigarCodec.encode(cigarAlong5To3DirOfRead));
 
         int readBasesConsumed = 0;
@@ -271,7 +272,7 @@ public final class SvCigarUtils {
 
         for (final CigarElement ce : cigarElements) {
 
-            if (readBasesConsumed + (ce.getOperator().consumesReadBases() ? ce.getLength() : 0) < startInclusive) {
+            if (readBasesConsumed + (ce.getOperator().consumesReadBases() ? ce.getLength() : 0) < startInclusiveOnRead) {
                 readBasesConsumed += ce.getOperator().consumesReadBases() ? ce.getLength() : 0;
             } else { // has started
                 if (!ce.getOperator().consumesReadBases()){ // e.g. 'D'
@@ -293,5 +294,10 @@ public final class SvCigarUtils {
         }
 
         return refWalkDist;
+    }
+
+    public static int computeAsscoatedDistOnRead(final Cigar cigar, final int distOnRef, final int startInclusiveOnRead,
+                                                 final boolean walkBackward) {
+        return 0;
     }
 }
