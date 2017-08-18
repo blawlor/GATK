@@ -160,7 +160,7 @@ after_success:
 #    echo "Uploading zip to gs://gatk-nightly-builds/";
 #    $GCLOUD/gsutil -m cp build/$ZIP_FILE gs://gatk-nightly-builds/"$(date +%Y-%m-%d)"-$ZIP_FILE;
 - if [[ $TRAVIS_BRANCH == je_knightlyBuild && $TRAVIS_EVENT_TYPE == cron && $UPLOAD == true ]]; then
-    curl -H "Content-Type:application/json" --data '{"docker_tag":"master"}' -X POST ${DOCKERHUB_URL};
+    curl -H "Content-Type:application/json" --data '{"build":true}' -X POST ${DOCKERHUB_URL};
   fi
 after_failure:
 - dmesg | tail -100
