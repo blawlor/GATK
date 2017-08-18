@@ -38,7 +38,7 @@ public class AnnotatedVariantProducer implements Serializable {
         final Iterator<SvType> it = inferredType.iterator();
         final VariantContext record =
                 produceAnnotatedVcFromInferredTypeAndRefLocations(novelAdjacencyReferenceLocations.leftJustifiedLeftRefLoc, -1,
-                        novelAdjacencyReferenceLocations.complication, it.next(), contigAlignments, broadcastReference);
+                        novelAdjacencyReferenceLocations.complication, it.next(), null, contigAlignments, broadcastReference);
 
         final List<VariantContext> result = new ArrayList<>();
         result.add(record);
@@ -46,7 +46,7 @@ public class AnnotatedVariantProducer implements Serializable {
         while (it.hasNext()) {
             final VariantContext mateRecord =
                     produceAnnotatedVcFromInferredTypeAndRefLocations(novelAdjacencyReferenceLocations.leftJustifiedRightRefLoc, -1,
-                            novelAdjacencyReferenceLocations.complication, it.next(), contigAlignments, broadcastReference);
+                            novelAdjacencyReferenceLocations.complication, it.next(), null, contigAlignments, broadcastReference);
             result.add(mateRecord);
         }
         return result.iterator();
@@ -60,6 +60,7 @@ public class AnnotatedVariantProducer implements Serializable {
      * @param end                               END of the VC, assumed to be < 0 if for BND formatted variant
      * @param breakpointComplications           complications associated with this breakpoint
      * @param inferredType                      inferred type of variant
+     * @param altHaplotypeSeq                   alt haplotype sequence (could be null)
      * @param contigAlignments                  chimeric alignments from contigs used for generating this novel adjacency
      * @param broadcastReference                broadcasted reference
      *
@@ -68,6 +69,7 @@ public class AnnotatedVariantProducer implements Serializable {
     static VariantContext produceAnnotatedVcFromInferredTypeAndRefLocations(final SimpleInterval refLoc, final int end,
                                                                             final BreakpointComplications breakpointComplications,
                                                                             final SvType inferredType,
+                                                                            final byte[] altHaplotypeSeq,
                                                                             final Iterable<ChimericAlignment> contigAlignments,
                                                                             final Broadcast<ReferenceMultiSource> broadcastReference)
             throws IOException {

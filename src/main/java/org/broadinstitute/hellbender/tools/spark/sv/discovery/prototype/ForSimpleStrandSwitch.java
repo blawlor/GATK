@@ -316,18 +316,26 @@ final class ForSimpleStrandSwitch implements VariantDetectorFromLongReadAlignmen
         toolLogger.info(invDupSuspects.count() + " chimera indicating inverted duplication");
 
         return invDupSuspects
-                .mapToPair(pair -> new Tuple2<>(new NovelAdjacencyReferenceLocations(pair._1, pair._2), pair._1))
+                .mapToPair(pair -> new Tuple2<>(new NovelAdjacencyReferenceLocations(pair._1, pair._2), new Tuple2<>(pair._1, pair._2)))
                 .groupByKey()
-                .mapToPair(noveltyAndEvidence -> inferInvDupRange(noveltyAndEvidence, broadcastReference.getValue()))
-                .map(noveltyTypeAndEvidence ->
+                .flatMapToPair(ForSimpleStrandSwitch::inferInvDupRange)
+                .map(noveltyTypeAndAltSeqAndEvidence ->
                         DiscoverVariantsFromContigAlignmentsSAMSpark
-                                .annotateVariant(noveltyTypeAndEvidence._1, noveltyTypeAndEvidence._2._1,
-                                                 noveltyTypeAndEvidence._2._2, broadcastReference));
+                                .annotateVariant(noveltyTypeAndAltSeqAndEvidence._1._1(), noveltyTypeAndAltSeqAndEvidence._1._2(),
+                                        noveltyTypeAndAltSeqAndEvidence._1._3(), noveltyTypeAndAltSeqAndEvidence._2, broadcastReference));
     }
 
-    private static Tuple2<NovelAdjacencyReferenceLocations, Tuple2<SvType, Iterable<ChimericAlignment>>>
-    inferInvDupRange(final Tuple2<NovelAdjacencyReferenceLocations, Iterable<ChimericAlignment>> noveltyAndEvidence,
-                     final ReferenceMultiSource reference) {
-        return null;// TODO: 8/18/17 fix
+    private static Iterator<Tuple2<Tuple3<NovelAdjacencyReferenceLocations, SvType.DuplicationInverted, byte[]>, List<ChimericAlignment>>>
+    inferInvDupRange(final Tuple2<NovelAdjacencyReferenceLocations, Iterable<Tuple2<ChimericAlignment, byte[]>>> noveltyAndEvidence) {
+
+        final NovelAdjacencyReferenceLocations novelAdjacency = noveltyAndEvidence._1;
+        final SvType.DuplicationInverted duplicationInverted = new SvType.DuplicationInverted(novelAdjacency);
+
+        final Map<byte[], List<ChimericAlignment>> collect = Utils.stream(noveltyAndEvidence._2)
+                .collect(Collectors.groupingBy(caAndSeq -> novelAdjacency.complication.extractAltHaplotypeForInvDup(caAndSeq._1, caAndSeq._2),
+                        Collectors.mapping(caAndSeq -> caAndSeq._1, Collectors.toList())));
+
+        return collect.entrySet().stream().map(entry -> new Tuple2<>(new Tuple3<>(novelAdjacency, duplicationInverted, entry.getKey()),
+                entry.getValue())).iterator();
     }
 }

@@ -66,7 +66,7 @@ public class NovelAdjacencyReferenceLocations {
 
         final String leftBreakpointRefContig, rightBreakpointRefContig;
         final int leftBreakpointCoord, rightBreakpointCoord;
-        if (complication.hasDuplicationAnnotation()) { // todo : development artifact-- assuming tandem duplication is not co-existing with inversion
+        if (complication.hasDuplicationAnnotation()) {
             if (complication.hasDupSeqButNoStrandSwitch()) { // simple duplication not involving inverted repeats
                 leftBreakpointRefContig = rightBreakpointRefContig = ca.regionWithLowerCoordOnContig.referenceSpan.getContig();
                 final SimpleInterval leftReferenceInterval, rightReferenceInterval;
@@ -86,7 +86,8 @@ public class NovelAdjacencyReferenceLocations {
                 rightBreakpointCoord = rightReferenceInterval.getStart() - 1;
             } else {
                 leftBreakpointRefContig = rightBreakpointRefContig = ca.regionWithLowerCoordOnContig.referenceSpan.getContig();
-                leftBreakpointCoord = rightBreakpointCoord = 1;
+                leftBreakpointCoord     = complication.getDupSeqRepeatUnitRefSpan().getStart() - 1;
+                rightBreakpointCoord    = complication.getDupSeqRepeatUnitRefSpan().getEnd();
             }
         } else { // inversion and simple deletion & insertion
             final SimpleInterval leftReferenceInterval, rightReferenceInterval;

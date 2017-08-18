@@ -3,6 +3,7 @@ package org.broadinstitute.hellbender.tools.spark.sv.discovery;
 import htsjdk.variant.variantcontext.Allele;
 import org.broadinstitute.hellbender.tools.spark.sv.utils.GATKSVVCFConstants;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 
@@ -18,7 +19,7 @@ public abstract class SvType {
     protected final Map<String, String> extraAttributes;
 
     public enum TYPES {
-        INV, DEL, INS, DUP;
+        INV, DEL, INS, DUP, DUP_INV;
     }
 
     protected SvType(final String id, final Allele altAllele, final int len, final Map<String, String> typeSpecificExtraAttributes) {
@@ -133,6 +134,29 @@ public abstract class SvType {
         private static String getIDString(final NovelAdjacencyReferenceLocations novelAdjacencyReferenceLocations) {
 
             return GATKSVVCFConstants.TANDUP_EXPANSION_INTERNAL_ID_START_STRING + GATKSVVCFConstants.INTERVAL_VARIANT_ID_FIELD_SEPARATOR
+                    + novelAdjacencyReferenceLocations.leftJustifiedLeftRefLoc.getContig() + GATKSVVCFConstants.INTERVAL_VARIANT_ID_FIELD_SEPARATOR
+                    + novelAdjacencyReferenceLocations.leftJustifiedLeftRefLoc.getEnd() + GATKSVVCFConstants.INTERVAL_VARIANT_ID_FIELD_SEPARATOR
+                    + novelAdjacencyReferenceLocations.leftJustifiedRightRefLoc.getStart();
+        }
+    }
+
+    public static final class DuplicationInverted extends SvType {
+
+        @Override
+        public String toString() {
+            return "DUP:INV";
+        }
+
+        @SuppressWarnings("unchecked")
+        public DuplicationInverted(final NovelAdjacencyReferenceLocations novelAdjacencyReferenceLocations) {
+            super(getIDString(novelAdjacencyReferenceLocations),
+                    Allele.create(createBracketedSymbAlleleString(GATKSVVCFConstants.SYMB_ALT_ALLELE_INVDUP_IN_HEADER)),
+                            novelAdjacencyReferenceLocations.complication.getDupSeqRepeatUnitRefSpan().size(),
+                            Collections.EMPTY_MAP);
+        }
+
+        private static String getIDString(final NovelAdjacencyReferenceLocations novelAdjacencyReferenceLocations) {
+            return GATKSVVCFConstants.INVDUP_INTERNAL_ID_START_STRING + GATKSVVCFConstants.INTERVAL_VARIANT_ID_FIELD_SEPARATOR
                     + novelAdjacencyReferenceLocations.leftJustifiedLeftRefLoc.getContig() + GATKSVVCFConstants.INTERVAL_VARIANT_ID_FIELD_SEPARATOR
                     + novelAdjacencyReferenceLocations.leftJustifiedLeftRefLoc.getEnd() + GATKSVVCFConstants.INTERVAL_VARIANT_ID_FIELD_SEPARATOR
                     + novelAdjacencyReferenceLocations.leftJustifiedRightRefLoc.getStart();

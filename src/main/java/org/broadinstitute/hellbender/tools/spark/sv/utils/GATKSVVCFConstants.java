@@ -16,6 +16,7 @@ public class GATKSVVCFConstants {
     public static final String SYMB_ALT_ALLELE_DEL_IN_HEADER = "DEL";
     public static final String SYMB_ALT_ALLELE_INS_IN_HEADER = "INS";
     public static final String SYMB_ALT_ALLELE_DUP_IN_HEADER = "DUP";
+    public static final String SYMB_ALT_ALLELE_INVDUP_IN_HEADER = "DUP:INV";
 
     // GATK-SV specific header lines
     // applicable to all precise records all the time
@@ -43,4 +44,5 @@ public class GATKSVVCFConstants {
     public static final String INTERVAL_VARIANT_ID_FIELD_SEPARATOR = "_";
     public static final String TANDUP_CONTRACTION_INTERNAL_ID_START_STRING = "DEL-DUPLICATION-TANDEM-CONTRACTION";
     public static final String TANDUP_EXPANSION_INTERNAL_ID_START_STRING = "INS-DUPLICATION-TANDEM-EXPANSION";
+    public static final String INVDUP_INTERNAL_ID_START_STRING = "DUPLICATION-INVERTED-EXPANSION";
 }
