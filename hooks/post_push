@@ -6,7 +6,7 @@ set -e
 tagStart=$(expr index "$IMAGE_NAME" :)  
 repoName=${IMAGE_NAME:0:tagStart-1}
 DATE=`date +%Y-%m-%d`
-NAME=$(git describe origin/master)
+NAME=$(git describe)
 
 # Tag and push image for each additional tag
 docker tag $IMAGE_NAME ${repoName}:${DATE}
