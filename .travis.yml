@@ -154,12 +154,12 @@ after_success:
 
 # This creates and uploads the gatk zip file to the nightly build bucket, only keeping the 10 newest entries
 - if [[ $TRAVIS_BRANCH == je_knightlyBuild && $TRAVIS_EVENT_TYPE == cron && $UPLOAD == true ]]; then
-    $GCLOUD/gcloud components -q update gsutil;
-    gsutil ls -l gs://gatk-nightly-builds | grep gatk | sort -r -k 2 | grep -o '\S\+$' | tail -n +11 | xargs -I {} gsutil rm {};
-    ./gradlew bundle;
-    ZIP_FILE="$(ls build/ | grep .zip)";
-    echo "Uploading zip to gs://gatk-nightly-builds/";
-    $GCLOUD/gsutil -m cp build/$ZIP_FILE gs://gatk-nightly-builds/"$(date +%Y-%m-%d)"-$ZIP_FILE;
+#    $GCLOUD/gcloud components -q update gsutil;
+#    gsutil ls -l gs://gatk-nightly-builds | grep gatk | sort -r -k 2 | grep -o '\S\+$' | tail -n +11 | xargs -I {} gsutil rm {};
+#    ./gradlew bundle;
+#    ZIP_FILE="$(ls build/ | grep .zip)";
+#    echo "Uploading zip to gs://gatk-nightly-builds/";
+#    $GCLOUD/gsutil -m cp build/$ZIP_FILE gs://gatk-nightly-builds/"$(date +%Y-%m-%d)"-$ZIP_FILE;
     curl -H "Content-Type:application/json" --data '{"docker_tag":"master"}' -X POST ${DOCKERHUB_URL};
   fi
 after_failure:
