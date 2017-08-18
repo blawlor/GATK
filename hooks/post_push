@@ -6,7 +6,11 @@ set -e
 tagStart=$(expr index "$IMAGE_NAME" :)  
 repoName=${IMAGE_NAME:0:tagStart-1}
 DATE=`date +%Y-%m-%d`
+# Grabbing the commit tag for master
+git clone git@github.com:broadinstitute/gatk.git tmp
+cd tmp
 NAME=$(git describe)
+cd ..
 
 # Tag and push image for each additional tag
 docker tag $IMAGE_NAME ${repoName}:${DATE}
