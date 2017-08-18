@@ -106,8 +106,8 @@ public class SvCigarUtilsUnitTest {
     @DataProvider(name = "refWalkDistanceTestDataException")
     private Object[][] createRefWalkDistanceTestDataException() {
         final Object[][] data = new Object[7][];
-        data[0] = new Object[]{TextCigarCodec.decode("50M10N101M"), 41, 10, true, 0};
-        data[1] = new Object[]{TextCigarCodec.decode("50M10P101M"), 41, 10, true, 0};
+        data[0] = new Object[]{TextCigarCodec.decode("50M10N101M"), 41, 10, 0};
+        data[1] = new Object[]{TextCigarCodec.decode("50M10P101M"), 41, 10, 0};
         final Cigar cigar = TextCigarCodec.decode("35H40S10M20I25M30D50M55S60H");
         data[2] = new Object[]{cigar, -1, 10, 0};
         data[3] = new Object[]{cigar, 0, 10, 0};

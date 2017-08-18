@@ -201,13 +201,16 @@ public final class BreakpointComplications {
 
     private void initForInvDup(final ChimericAlignment chimericAlignment, final byte[] contigSeq) {
 
-        final AlignmentInterval firstAlignmentInterval = chimericAlignment.regionWithLowerCoordOnContig;
+        final AlignmentInterval firstAlignmentInterval  = chimericAlignment.regionWithLowerCoordOnContig;
         final AlignmentInterval secondAlignmentInterval = chimericAlignment.regionWithHigherCoordOnContig;
 
         // TODO: 8/8/17 this might be wrong regarding how strand is involved, fix it
         insertedSequenceForwardStrandRep = getInsertedSequence(firstAlignmentInterval, secondAlignmentInterval, contigSeq);
-
         hasDuplicationAnnotation = true;
+
+        dupSeqRepeatNumOnRef = 1;
+        dupSeqRepeatNumOnCtg = 2;
+        dupSeqStrandOnRef = DEFAULT_INV_DUP_REF_STRAND;
 
         // jump start and jump landing locations
         final int js = firstAlignmentInterval.forwardStrand ? firstAlignmentInterval.referenceSpan.getEnd()
@@ -215,23 +218,29 @@ public final class BreakpointComplications {
         final int jl = secondAlignmentInterval.forwardStrand ? secondAlignmentInterval.referenceSpan.getStart()
                                                              : secondAlignmentInterval.referenceSpan.getEnd();
 
-        // TODO: 8/11/17 following are dummy values to get tests pass, wrong value to be corrected
-        dupSeqRepeatUnitRefSpan = new SimpleInterval(chimericAlignment.regionWithLowerCoordOnContig.referenceSpan);
-        dupSeqRepeatNumOnRef = 1;
-        dupSeqRepeatNumOnCtg = 2;
-        dupSeqStrandOnRef = DEFAULT_INV_DUP_REF_STRAND;
-        dupSeqStrandOnCtg = DEFAULT_INV_DUP_CTG_STRANDs_FR;
-        cigarStringsForDupSeqOnCtg = Arrays.asList("10M", "10M");
+        final int alpha = firstAlignmentInterval.referenceSpan.getStart(),
+                  omega = secondAlignmentInterval.referenceSpan.getStart();
+
+        if (firstAlignmentInterval.forwardStrand) {
+            dupSeqRepeatUnitRefSpan = new SimpleInterval(firstAlignmentInterval.referenceSpan.getContig(),
+                                                         Math.max(alpha, omega), Math.min(js, jl));
+            if ( (alpha <= omega && js < jl) || (alpha > omega && jl < js) ) {
+                invertedTransInsertionRefSpan = new SimpleInterval(firstAlignmentInterval.referenceSpan.getContig(),
+                                                                   Math.min(js, jl) + 1, Math.max(js, jl));
+            }
+            dupSeqStrandOnCtg = DEFAULT_INV_DUP_CTG_STRANDs_FR;
+        } else {
+            dupSeqRepeatUnitRefSpan = new SimpleInterval(firstAlignmentInterval.referenceSpan.getContig(),
+                                                         Math.max(js, jl), Math.min(alpha, omega));
+            if ( (alpha >= omega && jl < js) || (alpha < omega && js < jl) ) {
+                invertedTransInsertionRefSpan = new SimpleInterval(firstAlignmentInterval.referenceSpan.getContig(),
+                                                                   Math.min(js, jl) + 1, Math.max(js, jl));
+            }
+            dupSeqStrandOnCtg = DEFAULT_INV_DUP_CTG_STRANDs_RF;
+        }
+        cigarStringsForDupSeqOnCtg = DEFAULT_CIGAR_STRINGS_FOR_DUP_SEQ_ON_CTG; // not computing cigars because alt haplotypes will be extracted
 
         dupAnnotIsFromOptimization = false;
-        final boolean hasInvertedInsertedSequence = chimericAlignment.regionWithLowerCoordOnContig.forwardStrand == (js<jl);
-        if (hasInvertedInsertedSequence) {
-            invertedTransInsertionRefSpan = new SimpleInterval(firstAlignmentInterval.referenceSpan.getContig(),
-                                                               Math.min(js, jl) + 1,
-                                                               Math.max(js, jl));
-        } else {
-            invertedTransInsertionRefSpan = chimericAlignment.regionWithLowerCoordOnContig.referenceSpan;
-        }
     }
 
     /**
