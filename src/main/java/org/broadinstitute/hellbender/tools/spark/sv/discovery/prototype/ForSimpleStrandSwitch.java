@@ -52,11 +52,11 @@ final class ForSimpleStrandSwitch implements VariantDetectorFromLongReadAlignmen
         SVVCFWriter.writeVCF(options, vcfOutputFileName.replace(".vcf", "_simpleSS.vcf"),
                 fastaReference, simpleStrandSwitchBkpts, toolLogger);
 
-//        final JavaRDD<VariantContext> invDups =
-//                dealWithSuspectedInvDup(split._1, broadcastReference, toolLogger);
-//        if (invDups != null)
-//            SVVCFWriter.writeVCF(options, vcfOutputFileName.replace(".vcf", "_invDup.vcf"),
-//                    fastaReference, invDups, toolLogger);
+        final JavaRDD<VariantContext> invDups =
+                dealWithSuspectedInvDup(split._1, broadcastReference, toolLogger);
+        if (invDups != null)
+            SVVCFWriter.writeVCF(options, vcfOutputFileName.replace(".vcf", "_invDup.vcf"),
+                    fastaReference, invDups, toolLogger);
     }
 
     public static final class IsLikelyInvertedDuplication implements SerializablePredicate<AlignedContig> {
@@ -304,30 +304,30 @@ final class ForSimpleStrandSwitch implements VariantDetectorFromLongReadAlignmen
 
     // =================================================================================================================
 
-//    private JavaRDD<VariantContext> dealWithSuspectedInvDup(final JavaRDD<AlignedContig> longReads,
-//                                                            final Broadcast<ReferenceMultiSource> broadcastReference,
-//                                                            final Logger toolLogger) {
-//
-//        final JavaPairRDD<ChimericAlignment, byte[]> invDupSuspects =
-//                longReads
-//                        .mapToPair(ForSimpleStrandSwitch::convertAlignmentIntervalToChimericAlignment)
-//                        .filter(Objects::nonNull).cache();
-//
-//        toolLogger.info(invDupSuspects.count() + " chimera indicating inverted duplication");
-//
-//        return invDupSuspects
-//                .mapToPair(pair -> new Tuple2<>(new NovelAdjacencyReferenceLocations(pair._1, pair._2), pair._1))
-//                .groupByKey()
-//                .mapToPair(noveltyAndEvidence -> inferInvDupRange(noveltyAndEvidence, broadcastReference.getValue()))
-//                .map(noveltyTypeAndEvidence ->
-//                        DiscoverVariantsFromContigAlignmentsSAMSpark
-//                                .annotateVariant(noveltyTypeAndEvidence._1, noveltyTypeAndEvidence._2._1,
-//                                                 noveltyTypeAndEvidence._2._2, broadcastReference));
-//    }
-//
-//    private static Tuple2<NovelAdjacencyReferenceLocations, Tuple2<SvType, Iterable<ChimericAlignment>>>
-//    inferInvDupRange(final Tuple2<NovelAdjacencyReferenceLocations, Iterable<ChimericAlignment>> noveltyAndEvidence,
-//                     final ReferenceMultiSource reference) {
-//        return null;
-//    }
+    private JavaRDD<VariantContext> dealWithSuspectedInvDup(final JavaRDD<AlignedContig> longReads,
+                                                            final Broadcast<ReferenceMultiSource> broadcastReference,
+                                                            final Logger toolLogger) {
+
+        final JavaPairRDD<ChimericAlignment, byte[]> invDupSuspects =
+                longReads
+                        .mapToPair(ForSimpleStrandSwitch::convertAlignmentIntervalToChimericAlignment)
+                        .filter(Objects::nonNull).cache();
+
+        toolLogger.info(invDupSuspects.count() + " chimera indicating inverted duplication");
+
+        return invDupSuspects
+                .mapToPair(pair -> new Tuple2<>(new NovelAdjacencyReferenceLocations(pair._1, pair._2), pair._1))
+                .groupByKey()
+                .mapToPair(noveltyAndEvidence -> inferInvDupRange(noveltyAndEvidence, broadcastReference.getValue()))
+                .map(noveltyTypeAndEvidence ->
+                        DiscoverVariantsFromContigAlignmentsSAMSpark
+                                .annotateVariant(noveltyTypeAndEvidence._1, noveltyTypeAndEvidence._2._1,
+                                                 noveltyTypeAndEvidence._2._2, broadcastReference));
+    }
+
+    private static Tuple2<NovelAdjacencyReferenceLocations, Tuple2<SvType, Iterable<ChimericAlignment>>>
+    inferInvDupRange(final Tuple2<NovelAdjacencyReferenceLocations, Iterable<ChimericAlignment>> noveltyAndEvidence,
+                     final ReferenceMultiSource reference) {
+        return null;// TODO: 8/18/17 fix
+    }
 }

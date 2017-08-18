@@ -102,4 +102,47 @@ public class SvCigarUtilsUnitTest {
     public void testGetUnclippedReadLengthFromCigar(final Cigar cigar, final int expectedReadLength) {
         Assert.assertEquals(SvCigarUtils.getUnclippedReadLength(cigar), expectedReadLength);
     }
+
+    @DataProvider(name = "refWalkDistanceTestDataException")
+    private Object[][] createRefWalkDistanceTestDataException() {
+        final Object[][] data = new Object[7][];
+        data[0] = new Object[]{TextCigarCodec.decode("50M10N101M"), 41, 10, true, 0};
+        data[1] = new Object[]{TextCigarCodec.decode("50M10P101M"), 41, 10, true, 0};
+        final Cigar cigar = TextCigarCodec.decode("35H40S10M20I25M30D50M55S60H");
+        data[2] = new Object[]{cigar, -1, 10, 0};
+        data[3] = new Object[]{cigar, 0, 10, 0};
+        data[4] = new Object[]{cigar, 41, -1, 0};
+        data[5] = new Object[]{cigar, 41, 0, 0};
+        data[6] = new Object[]{cigar, 1, 201, 0};
+        return data;
+    }
+
+    @Test(dataProvider = "refWalkDistanceTestDataException", groups = "sv", expectedExceptions = IllegalArgumentException.class)
+    public void testRefWalkDistanceException(final Cigar cigar, final int startInclusive, final int distance,
+                                             final int expectedRefDist) {
+        Assert.assertEquals(SvCigarUtils.walkAlongRead(cigar, startInclusive, distance), expectedRefDist);
+    }
+
+    @DataProvider(name = "refWalkDistanceTestData")
+    private Object[][] createRefWalkDistanceTestData() {
+        final Object[][] data = new Object[11][];
+        final Cigar cigar = TextCigarCodec.decode("35H40S10M20I25M30D50M55S60H");
+        data[0] = new Object[]{cigar, 1, 40, 0};
+        data[1] = new Object[]{cigar, 1, 45, 5};
+        data[2] = new Object[]{cigar, 41, 10, 10};
+        data[3] = new Object[]{cigar, 41, 30, 10};
+        data[4] = new Object[]{cigar, 41, 25, 10};
+        data[5] = new Object[]{cigar, 41, 35, 15};
+        data[6] = new Object[]{cigar, 41, 56, 66};
+        data[7] = new Object[]{cigar, 41, 110, 115};
+        data[8] = new Object[]{cigar, 1, 200, 115};
+        data[9] = new Object[]{cigar, 61, 10, 0};
+        data[10] = new Object[]{cigar, 61, 15, 5};
+        return data;
+    }
+
+    @Test(dataProvider = "refWalkDistanceTestData", groups = "sv")
+    public void testRefWalkDistance(final Cigar cigar, final int startInclusive, final int distance, final int expectedRefDist) {
+        Assert.assertEquals(SvCigarUtils.walkAlongRead(cigar, startInclusive, distance), expectedRefDist);
+    }
 }
