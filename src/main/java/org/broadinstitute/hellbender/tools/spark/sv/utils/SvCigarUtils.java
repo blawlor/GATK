@@ -1,7 +1,6 @@
 package org.broadinstitute.hellbender.tools.spark.sv.utils;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Lists;
 import htsjdk.samtools.Cigar;
 import htsjdk.samtools.CigarElement;
 import htsjdk.samtools.CigarOperator;
@@ -299,17 +298,19 @@ public final class SvCigarUtils {
     }
 
     /**
-     *
-     * @param cigarAlong5To3DirOfRead
-     * @param distOnRef
-     * @param startInclusiveOnRead
-     * @param walkBackward
-     * @return
+     * Computes the corresponding distance needs to be walked on the read, given the Cigar and distance walked on the reference.
+     * @param cigarAlong5To3DirOfRead   cigar along the 5-3 direction of read (when read is mapped to reverse strand, bwa mem output cigar should be inverted)
+     * @param startInclusiveOnRead      start position (1-based) on the read (note it should not count the hard clipped bases, as usual)
+     * @param distOnRef                 distance to walk on the reference
+     * @param walkBackward              whether to walk backwards along the read or not
+     * @return                          corresponding walk distance on read (always positive)
+     * @throws IllegalArgumentException if input cigar contains padding operation or 'N', or
+     *                                  either of startInclusive or distance is non-positive, or
+     *                                  startInclusive + distance -1 is longer than the read as suggested by the cigar
      */
     @VisibleForTesting
-    public static int computeAssociatedDistOnRead(final Cigar cigarAlong5To3DirOfRead, final int distOnRef,
-                                                  final int startInclusiveOnRead,
-                                                  final boolean walkBackward) {
+    public static int computeAssociatedDistOnRead(final Cigar cigarAlong5To3DirOfRead, final int startInclusiveOnRead,
+                                                  final int distOnRef, final boolean walkBackward) {
 
         Utils.validateArg(distOnRef > 0 && startInclusiveOnRead > 0,
                 "start position (" + startInclusiveOnRead + ") or distance (" + distOnRef + ") is non-positive.");
@@ -317,6 +318,11 @@ public final class SvCigarUtils {
         final List<CigarElement> cigarElements = cigarAlong5To3DirOfRead.getCigarElements();
         Utils.validateArg(cigarElements.stream().noneMatch(ce -> ce.getOperator().isPadding() || ce.getOperator().equals(CigarOperator.N)),
                 "cigar contains padding, which is currently unsupported; cigar: " + TextCigarCodec.encode(cigarAlong5To3DirOfRead));
+        final int totalRefLen = cigarElements.stream().mapToInt(ce -> ce.getOperator().consumesReferenceBases() ? ce.getLength() : 0).sum();
+        Utils.validateArg(totalRefLen >= distOnRef,
+                "given walking distance on reference (" + distOnRef + ") would is longer than the total number (" +
+                        + totalRefLen + ") of reference bases spanned by the cigar, indicated by cigar " + TextCigarCodec.encode(cigarAlong5To3DirOfRead));
+
 
         // skip first several elements that give accumulated readBasesConsumed below startInclusiveOnRead
         int idx = 0;
@@ -325,13 +331,13 @@ public final class SvCigarUtils {
         CigarElement currEle = cigarElementsUnInverted.get(idx);
         while (readBasesConsumed + (currEle.getOperator().consumesReadBases() ? currEle.getLength() : 0) < startInclusiveOnRead) {
             readBasesConsumed += currEle.getOperator().consumesReadBases() ? currEle.getLength() : 0;
-            ++idx;
+            currEle = cigarElementsUnInverted.get(++idx);
         }
 
         int readWalkDist = 0;
         int refWalked = 0;
         while (idx < cigarElements.size()) {
-            currEle = cigarElementsUnInverted.get(idx);
+            currEle = cigarElementsUnInverted.get(idx++);
             final int skip = Math.max(0, startInclusiveOnRead - readBasesConsumed - 1);
 
             if (currEle.getOperator().consumesReferenceBases()) {
@@ -347,7 +353,6 @@ public final class SvCigarUtils {
                 readWalkDist += currEle.getOperator().consumesReadBases() ? currEle.getLength() - skip : 0;
                 readBasesConsumed += currEle.getOperator().consumesReadBases() ? currEle.getLength() : 0;
             }
-            ++idx;
         }
 
         final int readLength = cigarElements.stream().mapToInt(ce -> ce.getOperator().consumesReadBases() ? ce.getLength() : 0).sum();

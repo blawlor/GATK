@@ -144,4 +144,41 @@ public class SvCigarUtilsUnitTest {
     public void testRefWalkDistance(final Cigar cigar, final int startInclusive, final int distance, final int expectedRefDist) {
         Assert.assertEquals(SvCigarUtils.computeAssociatedDistOnRef(cigar, startInclusive, distance), expectedRefDist);
     }
+
+    @DataProvider(name = "readWalkDistanceTestDataException")
+    private Object[][] createReadWalkDistanceTestDataException() {
+        final Object[][] data = new Object[6][];
+        data[0] = new Object[]{TextCigarCodec.decode("50M10N101M"), 41, 10, false, 0};
+        data[1] = new Object[]{TextCigarCodec.decode("50M10P101M"), 41, 10, false, 0};
+        final Cigar cigar = TextCigarCodec.decode("35H40S10M20I25M30D50M55S60H");
+        data[2] = new Object[]{cigar, -1, 10, false, 0};
+        data[3] = new Object[]{cigar, 0, 10, false, 0};
+        data[4] = new Object[]{cigar, 41, -1, false, 0};
+        data[5] = new Object[]{cigar, 41, 0, false, 0};
+        return data;
+    }
+
+    @Test(dataProvider = "readWalkDistanceTestDataException", groups = "sv", expectedExceptions = IllegalArgumentException.class)
+    public void testReadWalkDistanceTestDataException(final Cigar cigar, final int startInclusive, final int refWalkDist,
+                                                      final boolean walkBackwards, final int expectedReadWalkDist) {
+        Assert.assertEquals(SvCigarUtils.computeAssociatedDistOnRead(cigar, startInclusive, refWalkDist, walkBackwards), expectedReadWalkDist);
+    }
+
+    @DataProvider(name = "readWalkDistanceTestData")
+    private Object[][] createReadWalkDistanceTestData() {
+        final Object[][] data = new Object[4][];
+        final Cigar cigar = TextCigarCodec.decode("35H40S10M20I25M30D50M55S60H");
+        data[0] = new Object[]{cigar, 1, 10, false, 50};
+        data[1] = new Object[]{cigar, 1, 5, false, 45};
+        data[2] = new Object[]{cigar, 1, 16, false, 76};
+        data[3] = new Object[]{cigar, 1, 66, false, 96};
+
+        return data;
+    }
+
+    @Test(dataProvider = "readWalkDistanceTestData", groups = "sv")
+    public void testReadWalkDistanceTestData(final Cigar cigar, final int startInclusive, final int refWalkDist,
+                                             final boolean walkBackwards, final int expectedReadWalkDist) {
+        Assert.assertEquals(SvCigarUtils.computeAssociatedDistOnRead(cigar, startInclusive, refWalkDist, walkBackwards), expectedReadWalkDist);
+    }
 }

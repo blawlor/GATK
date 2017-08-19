@@ -267,7 +267,7 @@ public final class BreakpointComplications {
                 needRC = false;
             } else {
                 final int walkOnRead = SvCigarUtils.computeAssociatedDistOnRead(secondAlignmentInterval.cigarAlong5to3DirectionOfContig,
-                        secondAlignmentInterval.endInAssembledContig, alpha - omega,  true);
+                        secondAlignmentInterval.endInAssembledContig, alpha - omega, true);
                 start  = firstAlignmentInterval.startInAssembledContig - 1;
                 end    = secondAlignmentInterval.endInAssembledContig - walkOnRead;
                 needRC = true;
