@@ -1,7 +1,7 @@
 package org.broadinstitute.hellbender.tools.spark.sv.discovery.prototype;
 
-import avro.shaded.com.google.common.annotations.VisibleForTesting;
 import com.google.cloud.genomics.dataflow.utils.GCSOptions;
+import com.google.common.annotations.VisibleForTesting;
 import htsjdk.samtools.Cigar;
 import htsjdk.samtools.CigarElement;
 import htsjdk.samtools.CigarOperator;

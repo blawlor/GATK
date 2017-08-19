@@ -1,6 +1,7 @@
 package org.broadinstitute.hellbender.tools.spark.sv.utils;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Lists;
 import htsjdk.samtools.Cigar;
 import htsjdk.samtools.CigarElement;
 import htsjdk.samtools.CigarOperator;
@@ -253,6 +254,7 @@ public final class SvCigarUtils {
      *                                  either of startInclusive or distance is non-positive, or
      *                                  startInclusive + distance -1 is longer than the read as suggested by the cigar
      */
+    @VisibleForTesting
     public static int computeAssociatedDistOnRef(final Cigar cigarAlong5To3DirOfRead, final int startInclusiveOnRead,
                                                  final int distanceOnRead) {
 
@@ -296,8 +298,64 @@ public final class SvCigarUtils {
         return refWalkDist;
     }
 
-    public static int computeAsscoatedDistOnRead(final Cigar cigar, final int distOnRef, final int startInclusiveOnRead,
-                                                 final boolean walkBackward) {
-        return 0;
+    /**
+     *
+     * @param cigarAlong5To3DirOfRead
+     * @param distOnRef
+     * @param startInclusiveOnRead
+     * @param walkBackward
+     * @return
+     */
+    @VisibleForTesting
+    public static int computeAssociatedDistOnRead(final Cigar cigarAlong5To3DirOfRead, final int distOnRef,
+                                                  final int startInclusiveOnRead,
+                                                  final boolean walkBackward) {
+
+        Utils.validateArg(distOnRef > 0 && startInclusiveOnRead > 0,
+                "start position (" + startInclusiveOnRead + ") or distance (" + distOnRef + ") is non-positive.");
+
+        final List<CigarElement> cigarElements = cigarAlong5To3DirOfRead.getCigarElements();
+        Utils.validateArg(cigarElements.stream().noneMatch(ce -> ce.getOperator().isPadding() || ce.getOperator().equals(CigarOperator.N)),
+                "cigar contains padding, which is currently unsupported; cigar: " + TextCigarCodec.encode(cigarAlong5To3DirOfRead));
+
+        // skip first several elements that give accumulated readBasesConsumed below startInclusiveOnRead
+        int idx = 0;
+        int readBasesConsumed = 0;
+        final List<CigarElement> cigarElementsUnInverted = cigarAlong5To3DirOfRead.getCigarElements();
+        CigarElement currEle = cigarElementsUnInverted.get(idx);
+        while (readBasesConsumed + (currEle.getOperator().consumesReadBases() ? currEle.getLength() : 0) < startInclusiveOnRead) {
+            readBasesConsumed += currEle.getOperator().consumesReadBases() ? currEle.getLength() : 0;
+            ++idx;
+        }
+
+        int readWalkDist = 0;
+        int refWalked = 0;
+        while (idx < cigarElements.size()) {
+            currEle = cigarElementsUnInverted.get(idx);
+            final int skip = Math.max(0, startInclusiveOnRead - readBasesConsumed - 1);
+
+            if (currEle.getOperator().consumesReferenceBases()) {
+                if (refWalked + currEle.getLength() - skip < distOnRef) { // hasn't walked enough yet on reference
+                    refWalked += currEle.getLength() - skip;
+                    readWalkDist += currEle.getOperator().consumesReadBases() ? currEle.getLength() - skip : 0;
+                    readBasesConsumed += currEle.getOperator().consumesReadBases() ? currEle.getLength() : 0;
+                } else { // would be walked enough on reference
+                    readWalkDist += currEle.getOperator().consumesReadBases() ? distOnRef - refWalked : 0;
+                    break;
+                }
+            } else {
+                readWalkDist += currEle.getOperator().consumesReadBases() ? currEle.getLength() - skip : 0;
+                readBasesConsumed += currEle.getOperator().consumesReadBases() ? currEle.getLength() : 0;
+            }
+            ++idx;
+        }
+
+        final int readLength = cigarElements.stream().mapToInt(ce -> ce.getOperator().consumesReadBases() ? ce.getLength() : 0).sum();
+
+        if (startInclusiveOnRead + readWalkDist - 1 > readLength)
+            throw new GATKException("Computed walk distance (start: " + startInclusiveOnRead + ", distOnRef: " +
+                    distOnRef + ") on read beyond read length (" + readLength +") with cigar " + TextCigarCodec.encode(cigarAlong5To3DirOfRead));
+
+        return readWalkDist;
     }
 }

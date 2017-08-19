@@ -260,13 +260,13 @@ public final class BreakpointComplications {
             final int alpha = firstAlignmentInterval.referenceSpan.getStart(),
                       omega = secondAlignmentInterval.referenceSpan.getStart();
             if (alpha <= omega) {
-                final int walkOnRead = SvCigarUtils.computeAsscoatedDistOnRead(firstAlignmentInterval.cigarAlong5to3DirectionOfContig,
+                final int walkOnRead = SvCigarUtils.computeAssociatedDistOnRead(firstAlignmentInterval.cigarAlong5to3DirectionOfContig,
                         firstAlignmentInterval.startInAssembledContig, omega - alpha, false);
                 start  = firstAlignmentInterval.startInAssembledContig + walkOnRead - 1;
                 end    = secondAlignmentInterval.endInAssembledContig;
                 needRC = false;
             } else {
-                final int walkOnRead = SvCigarUtils.computeAsscoatedDistOnRead(secondAlignmentInterval.cigarAlong5to3DirectionOfContig,
+                final int walkOnRead = SvCigarUtils.computeAssociatedDistOnRead(secondAlignmentInterval.cigarAlong5to3DirectionOfContig,
                         secondAlignmentInterval.endInAssembledContig, alpha - omega,  true);
                 start  = firstAlignmentInterval.startInAssembledContig - 1;
                 end    = secondAlignmentInterval.endInAssembledContig - walkOnRead;
@@ -276,13 +276,13 @@ public final class BreakpointComplications {
             final int alpha = firstAlignmentInterval.referenceSpan.getEnd(),
                       omega = secondAlignmentInterval.referenceSpan.getEnd();
             if (alpha >= omega) {
-                final int walkOnRead = SvCigarUtils.computeAsscoatedDistOnRead(firstAlignmentInterval.cigarAlong5to3DirectionOfContig,
+                final int walkOnRead = SvCigarUtils.computeAssociatedDistOnRead(firstAlignmentInterval.cigarAlong5to3DirectionOfContig,
                         firstAlignmentInterval.startInAssembledContig, alpha - omega, false);
                 start  = firstAlignmentInterval.startInAssembledContig + walkOnRead - 1;
                 end    = secondAlignmentInterval.endInAssembledContig;
                 needRC = true;
             } else {
-                final int walkOnRead = SvCigarUtils.computeAsscoatedDistOnRead(secondAlignmentInterval.cigarAlong5to3DirectionOfContig,
+                final int walkOnRead = SvCigarUtils.computeAssociatedDistOnRead(secondAlignmentInterval.cigarAlong5to3DirectionOfContig,
                         secondAlignmentInterval.endInAssembledContig, omega - alpha, true);
                 start  = firstAlignmentInterval.startInAssembledContig - 1;
                 end    = secondAlignmentInterval.endInAssembledContig - walkOnRead;
